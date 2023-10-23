@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Hôtel Manager</title>
+</head>
+<body>
+	<h1>Hotel Manager v1.0.1</h1>
+	<section id="rooms"></section>
+	<section id="form">
+		<form style="display: contents;" onsubmit='
+			const values = this.elements;
+			roomsData[selected] = { firstname : values.firstname.value, lastname: values.lastname.value, paymentMethod : values.paymentMethod.value, arrivalDate : values.arrivalDate.value };
+			localStorage.setItem("rooms", JSON.stringify(roomsData));
+			initRooms();
+			return false;
+		'>
+			<label>
+				<span>First Name :</span>
+				<input type="text" id="firstname" placeholder="Prénom" required>
+			</label>
+			<label>
+				<span>Last Name :</span>
+				<input type="text" id="lastname" placeholder="Nom" required>
+			</label>
+			<label>
+				<span>Payment Method :</span>
+				<select id="paymentMethod" required>
+					<option value="cash">Cash</option>
+					<option value="card">Card</option>
+					<option value="check">Check</option>
+				</select>
+			</label>
+			<label>
+				<span>Arrival Date :</span>
+				<input type="date" id="arrivalDate" required>
+			</label>
+			<label>
+				<button>Enregistrer</button>
+			</label>
+		</form>
+		<label>
+			<button id="delete" onclick='
+				roomsData[selected] = null;
+				localStorage.setItem("rooms", JSON.stringify(roomsData));
+				[...document.querySelector("form").elements].map((e) => e.value = "");
+				initRooms();
+			'>Supprimer</button>
+		</label>
+	</section>
+
+	<script>
+		const style = document.createElement("style");
+		style.innerHTML = `
+			*{box-sizing: border-box; margin: 0;}
+			body, html{height: 100%;}
+			body {display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); grid-template-rows: max-content;align-content: center; justify-items: center; gap: 1em; padding: 0 75px;}
+			#rooms {display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); padding: 2px; gap: 2px; background: #ececec; height: fit-content; width: 100%; max-width: 700px;}
+			#rooms div { aspect-ratio: 1; height: fit-content; display: flex; justify-content: center; align-items: center; background: black; cursor: pointer; height: 100%; }
+			#rooms div.free:hover { box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.05); }
+			#rooms div.active:hover { box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.25); }
+			#rooms div.free { background: white; }
+			#rooms div.taken { background: none; }
+			#rooms div.active { background: rgba(0,0,255,0.8) !important; color: white !important; }
+			#form {display: grid; justify-items: center; gap: 0.3em; grid-template-columns: repeat(1, minmax(0, 1fr));}
+			#form input, #form button { padding: 0.5em; }
+			#form input, #form button { border: 1px solid rgba(0, 0, 0, 0.25); }
+			#form input, #form button, #rooms div, #rooms { border-radius: 0em; }
+			#form label:has(button), #form button { width: 100%; }
+			body *{ transition: all 200ms ease-in-out; font-family: -system-ui, Calibri; }
+		`;
+
+		const roomsCount = 44;
+		let selected = undefined;
+		const init = localStorage.getItem('rooms') ?? localStorage.setItem('rooms', JSON.stringify({
+			30 : { firstname : "Eduardo", lastname: "Calvente", paymentMethod : "cash", arrivalDate : "2023-10-19" },
+			12 : { firstname : "Shimi", lastname: "Costavalente", paymentMethod : "card", arrivalDate : "2023-10-21" },
+			5 : { firstname : "Norwell", lastname: "Bingham", paymentMethod : "cash", arrivalDate : "2023-10-18" },
+			40 : { firstname : "Seok-yu", lastname: "Park", paymentMethod : "check", arrivalDate : "2023-10-19" },
+		}));
+
+		let roomsData = JSON.parse(localStorage.getItem('rooms'));
+		const initRooms = function () {
+			const rooms = document.createDocumentFragment();
+			for (let index = 0; index < roomsCount; index++) {
+				const room = document.createElement("div");
+				room.innerHTML = index+1;
+				room.classList = (roomsData[index] && "taken") ?? "free";
+				room.onclick = function() {
+					['firstname', 'lastname', 'paymentMethod', 'arrivalDate'].map((id) => {
+						document.querySelector('#'+id).value = roomsData[index]?.[id] ?? null
+					});
+					selected = index;
+				}
+				rooms.appendChild(room);
+			}
+			document.querySelector('body').prepend(style)
+			document.querySelector('#rooms').innerHTML = null;
+			document.querySelector('#rooms').append(rooms);
+		}
+		initRooms();
+
+		setInterval(() => {
+			[...document.querySelector('form').elements, document.querySelector('#delete')].map((element, i) => {
+				(selected === undefined) && element.setAttribute('disabled', true);
+				(selected !== undefined) && element.removeAttribute('disabled');
+			});
+			[...document.querySelectorAll('#rooms div')].map((e,i) => (i !== selected) && e.classList.remove("active"));
+			document.querySelectorAll('#rooms div')[selected]?.classList.add('active');
+		}, 0);
+
+		document.querySelectorAll('#rooms div')[selected]?.addEventListener('click', (e) => selected = undefined, {once: true});
+	</script>
+</body>
+</html>
